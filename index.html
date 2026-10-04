@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoPlot 3D - Multiecuación & Análisis Vectorial en ℝ³</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Math.js v12.4.1 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.js"></script>
+    
+    <!-- Plotly.js v2.32.0 CDN -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        navy: {
+                            950: '#070a12',
+                            900: '#0b0f19',
+                            850: '#111827',
+                            800: '#1e293b',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070a12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .math-fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 3px;
+        }
+        .math-fraction-num {
+            border-bottom: 1px solid #64748b;
+            padding: 0 5px 1px 5px;
+        }
+        .math-fraction-den {
+            padding: 1px 5px 0 5px;
+            color: #38bdf8;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col lg:flex-row overflow-x-hidden">
+
+    <!-- PANEL LATERAL IZQUIERDO (SIDEBAR) -->
+    <aside class="w-full lg:w-[460px] xl:w-[500px] bg-[#111827] border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col lg:h-screen lg:overflow-y-auto shrink-0 z-20 shadow-2xl">
+        
+        <!-- Encabezado Principal -->
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-[#111827]/95 sticky top-0 backdrop-blur-md z-30">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <svg class="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-base tracking-tight text-white leading-tight">GeoPlot 3D</h1>
+                        <span class="px-2 py-0.5 text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-full">
+                            v2.0 Fichas + Multiecuación
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Paramétricas, Simétricas y Diagnóstico Geométrico en ℝ³</p>
+                </div>
+            </div>
+            <button onclick="renderPlot(true)" title="Actualizar Gráfica" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Contenido del Sidebar -->
+        <div class="p-4 space-y-5 flex-1">
+
+            <!-- Escenarios Demostrativos Rápidos -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Escenarios de Prueba Rápida
+                    </span>
+                    <span class="text-[10px] text-indigo-400 font-mono">1 clic para cargar</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button onclick="loadScenario('lissajous_line')" class="p-2.5 rounded-xl bg-[#0b0f19] hover:bg-indigo-950/50 border border-slate-800 hover:border-cyan-500/40 text-left transition">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-cyan-400 mb-0.5">
+                            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                            Curva + Recta
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight">Silla Lissajous 3D + Recta Simétrica</p>
+                    </button>
+
+                    <button onclick="loadScenario('intersecting_lines')" class="p-2.5 rounded-xl bg-[#0b0f19] hover:bg-indigo-950/50 border border-slate-800 hover:border-emerald-500/40 text-left transition">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 mb-0.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            Se Intersectan
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight">2 rectas secantes en P(2, 5, 5)</p>
+                    </button>
+
+                    <button onclick="loadScenario('skew_lines')" class="p-2.5 rounded-xl bg-[#0b0f19] hover:bg-indigo-950/50 border border-slate-800 hover:border-amber-500/40 text-left transition">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-amber-400 mb-0.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            Se Cruzan
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight">2 rectas alabeadas + dist. mín</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botones para Agregar Nuevas Ecuaciones -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Agregar Ecuación al Lienzo
+                    </span>
+                    <span id="eq-counter-badge" class="text-[11px] font-mono text-indigo-300 bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 rounded-md">
+                        2 activas
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="addEquation('parametric')" class="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold text-xs shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>+ Curva Paramétrica</span>
+                    </button>
+                    <button onclick="addEquation('symmetric')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-xs shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>+ Recta Simétrica</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PANEL DE ANÁLISIS DE POSICIÓN RELATIVA ENTRE RECTAS SIMÉTRICAS -->
+            <div id="intersection-panel" class="bg-[#0b0f19] rounded-2xl border border-indigo-500/30 p-3.5 space-y-3 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-300">
+                            Analizador de Rectas (Intersección / Cruce)
+                        </h2>
+                    </div>
+                    <label class="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer select-none">
+                        <input type="checkbox" id="show-analysis-markers" checked onchange="renderPlot(true)" class="rounded accent-indigo-500">
+                        <span>Marcadores 3D</span>
+                    </label>
+                </div>
+
+                <!-- Selectores de par de rectas -->
+                <div id="line-selectors-container" class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-mono text-slate-400 mb-1">Primera Recta (L₁)</label>
+                        <select id="select-line-a" onchange="runLineAnalysis(); renderPlot(true);" class="w-full bg-[#111827] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-mono text-slate-400 mb-1">Segunda Recta (L₂)</label>
+                        <select id="select-line-b" onchange="runLineAnalysis(); renderPlot(true);" class="w-full bg-[#111827] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"></select>
+                    </div>
+                </div>
+
+                <!-- Resultado Matemático -->
+                <div id="analysis-result-card" class="p-3 rounded-xl bg-[#111827] border border-slate-800 text-xs space-y-2">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
+            <!-- Caja de Error Global -->
+            <div id="error-box" class="hidden p-3.5 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-200 text-xs space-y-1">
+                <div class="font-semibold flex items-center gap-1.5 text-rose-400">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span>Revisa la sintaxis matemática</span>
+                </div>
+                <p id="error-message" class="font-mono text-[11px] text-rose-300/90 break-words pl-5"></p>
+            </div>
+
+            <!-- LISTA DINÁMICA DE TARJETAS DE ECUACIONES -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Ecuaciones y Fichas Descriptivas
+                    </span>
+                    <button onclick="collapseAllCards()" class="text-[11px] text-indigo-400 hover:text-indigo-300 transition">
+                        Contraer / Expandir todo
+                    </button>
+                </div>
+
+                <div id="equations-list" class="space-y-4">
+                    <!-- Tarjetas generadas dinámicamente -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Pie del Sidebar -->
+        <div class="p-3.5 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between bg-[#0b0f19]">
+            <span>Arrastra: Rotar • Clic der: Mover • Rueda: Zoom</span>
+            <span class="font-mono text-indigo-400 font-semibold">ℝ³</span>
+        </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL DERECHA (BARRA DE VISTAS + LIENZO 3D + FICHA DESCRIPTIVA FLOTANTE) -->
+    <main class="flex-1 flex flex-col h-[78vh] lg:h-screen bg-[#0b0f19] relative overflow-hidden">
+        
+        <!-- Barra Superior de Puntos de Vista y Proyección -->
+        <header class="bg-[#111827]/90 backdrop-blur-md border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 z-10">
+            
+            <!-- Botones de Punto de Vista -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    Puntos de Vista:
+                </span>
+
+                <button id="cam-isometric" onclick="setCameraView('isometric')" class="cam-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm transition flex items-center gap-1.5">
+                    <span>Isométrica (3D)</span>
+                </button>
+
+                <button id="cam-xy" onclick="setCameraView('xy')" class="cam-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                    <span>Plano XY (Superior)</span>
+                </button>
+
+                <button id="cam-xz" onclick="setCameraView('xz')" class="cam-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>Plano XZ (Frontal)</span>
+                </button>
+
+                <button id="cam-yz" onclick="setCameraView('yz')" class="cam-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                    <span>Plano YZ (Lateral)</span>
+                </button>
+            </div>
+
+            <!-- Controles de Ficha Flotante y Proyección -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSummaryOverlay()" id="btn-toggle-summary" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span>Ficha Descriptiva en Pantalla</span>
+                </button>
+
+                <div class="flex items-center gap-1 bg-[#0b0f19] p-1 rounded-lg border border-slate-800">
+                    <span class="text-[11px] text-slate-400 px-1.5 hidden sm:inline">Proyección:</span>
+                    <button id="proj-perspective" onclick="setProjection('perspective')" class="px-2.5 py-1 rounded text-xs font-medium bg-slate-800 text-white transition">
+                        Perspectiva
+                    </button>
+                    <button id="proj-orthographic" onclick="setProjection('orthographic')" class="px-2.5 py-1 rounded text-xs font-medium text-slate-400 hover:text-white transition">
+                        Ortográfica
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Lienzo 3D y Superposiciones -->
+        <div class="flex-1 relative w-full h-full">
+            <div id="plot-container" class="w-full h-full"></div>
+
+            <!-- PANEL FLOTANTE EN LA ESQUINA SUPERIOR DERECHA: FICHA DESCRIPTIVA AUTOMÁTICA -->
+            <div id="floating-summary-panel" class="absolute top-3 right-3 w-80 sm:w-[400px] max-h-[75%] flex flex-col bg-[#111827]/95 backdrop-blur-md border border-indigo-500/40 rounded-2xl shadow-2xl z-10 overflow-hidden transition-all duration-200">
+                <div class="px-3.5 py-2.5 bg-[#0b0f19]/90 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-white">
+                            Ficha Descriptiva Automática
+                        </h3>
+                    </div>
+                    <button onclick="toggleSummaryOverlay()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition" title="Ocultar/Mostrar panel">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="floating-summary-content" class="p-3 overflow-y-auto space-y-2.5 text-xs">
+                    <!-- Rellenado automáticamente con cada cambio -->
+                </div>
+            </div>
+
+            <!-- Referencia de Ejes Inferior Izquierda -->
+            <div class="absolute bottom-4 left-4 pointer-events-none bg-[#111827]/90 backdrop-blur-md border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs space-y-1.5 shadow-xl">
+                <div class="font-semibold text-slate-300 flex items-center gap-2">
+                    <span>Referencia de Ejes</span>
+                    <span id="active-view-badge" class="text-[10px] font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded">
+                        Isométrica (3D)
+                    </span>
+                </div>
+                <div class="flex items-center gap-4 font-mono text-[11px]">
+                    <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded-full bg-rose-500"></span>Eje X</span>
+                    <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Eje Y</span>
+                    <span class="flex items-center gap-1 text-sky-400"><span class="w-2 h-2 rounded-full bg-sky-500"></span>Eje Z</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // PALETA DE COLORES Y ESTADO GLOBAL
+        // ==========================================
+        const COLOR_PALETTE = [
+            '#22d3ee', // Cyan
+            '#f43f5e', // Rose
+            '#10b981', // Emerald
+            '#a855f7', // Purple
+            '#f59e0b', // Amber
+            '#38bdf8', // Sky
+            '#ec4899', // Pink
+            '#84cc16'  // Lime
+        ];
+
+        const state = {
+            projection: 'perspective',
+            currentView: 'isometric',
+            allCollapsed: false,
+            summaryVisible: true,
+            camera: {
+                eye: { x: 1.6, y: 1.6, z: 1.3 },
+                up: { x: 0, y: 0, z: 1 },
+                center: { x: 0, y: 0, z: 0 },
+                projection: { type: 'perspective' }
+            },
+            equations: [],
+            nextId: 1
+        };
+
+        let updateTimer = null;
+
+        // ==========================================
+        // PLANTILLAS DE CURVAS PARAMÉTRICAS
+        // ==========================================
+        const PARAMETRIC_PRESETS = {
+            lissajous: {
+                name: 'Silla Lissajous 3D',
+                x: '4 * cos(t)',
+                y: '4 * sin(t)',
+                z: '2 * sin(2 * t)',
+                tmin: 0,
+                tmax: 6.2832,
+                steps: 700,
+                customNote: 'Curva sobre silla de montar: proyecta un círculo de radio 4 en XY y un ocho en XZ/YZ.'
+            },
+            helice: {
+                name: 'Hélice Circular',
+                x: '3 * cos(t)',
+                y: '3 * sin(t)',
+                z: 't / 2',
+                tmin: -10,
+                tmax: 10,
+                steps: 600,
+                customNote: 'Trayectoria helicoidal cilíndrica de radio R = 3 y ascenso constante en Z.'
+            },
+            trebol: {
+                name: 'Nudo Trébol',
+                x: 'sin(t) + 2 * sin(2 * t)',
+                y: 'cos(t) - 2 * cos(2 * t)',
+                z: '-sin(3 * t)',
+                tmin: 0,
+                tmax: 6.2832,
+                steps: 750,
+                customNote: 'Curva cerrada periódica tridimensional con simetría rotacional triple.'
+            },
+            cono: {
+                name: 'Cono Espiral',
+                x: '(t / 2) * cos(2 * t)',
+                y: '(t / 2) * sin(2 * t)',
+                z: 't',
+                tmin: -10,
+                tmax: 10,
+                steps: 650,
+                customNote: 'Espiral contenida sobre la superficie de un cono circular recto.'
+            }
+        };
+
+        // ==========================================
+        // ESCENARIOS PRECARGADOS
+        // ==========================================
+        function loadScenario(scenarioKey) {
+            state.equations = [];
+            state.nextId = 1;
+
+            if (scenarioKey === 'lissajous_line') {
+                // La ecuación probada por el usuario + una recta simétrica de referencia
+                state.equations.push({
+                    id: state.nextId++,
+                    type: 'parametric',
+                    name: 'Curva Lissajous C₁',
+                    color: '#22d3ee',
+                    visible: true,
+                    collapsed: false,
+                    customNote: 'Proyecta una circunferencia de radio 4 en el Plano XY y una lemniscata en XZ/YZ.',
+                    x: '4 * cos(t)',
+                    y: '4 * sin(t)',
+                    z: '2 * sin(2 * t)',
+                    tmin: 0,
+                    tmax: 6.2832,
+                    steps: 700
+                });
+                state.equations.push({
+                    id: state.nextId++,
+                    type: 'symmetric',
+                    name: 'Recta Simétrica L₁',
+                    color: '#f59e0b',
+                    visible: true,
+                    collapsed: false,
+                    customNote: 'Recta tangente en el punto P₀(4, 0, 0) con vector director ⟨0, 4, 4⟩.',
+                    x0: 4, y0: 0, z0: 0,
+                    a: 0, b: 4, c: 4,
+                    tmin: -1.5, tmax: 1.5,
+                    showP0: true,
+                    showVector: true
+                });
+            } else if (scenarioKey === 'intersecting_lines') {
+                // Dos rectas secantes que se cortan exactamente en P(2, 5, 5)
+                state.equations.push({
+                    id: state.nextId++,
+                    type: 'symmetric',
+                    name: 'Recta L₁',
+                    color: '#38bdf8',
+                    visible: true,
+                    collapsed: false,
+                    customNote: 'Pasa por P₀(0, 1, -1) y se intersecta con L₂ en (2, 5, 5).',
+                    x0: 0, y0: 1, z0: -1,
+                    a: 1, b: 2, c: 3,
+                    tmin: -3, tmax: 5,
+                    showP0: true,
+                    showVector: true
+                });
+                state.equations.push({
+                    id: state.nextId++,
+                    type: 'symmetric',
+                    name: 'Recta L₂',
+                    color: '#f43f5e',
+                    visible: true,
+                    collapsed: false,
+                    customNote: 'Recta secante que corta a L₁ formando un ángulo de 79.48°.',
+                    x0: 3, y0: 3, z0: 6,
+                    a: -1, b: 2, c: -1,
+                    tmin: -4, tmax: 4,
+                    showP0: true,
+                    showVector: true
+                });
+            } else if (scenarioKey === 'skew_lines') {
+                // Dos rectas alabeadas (se cruzan sin tocarse)
+                state.equations.push({
+                    id: state.nextId++,
+                    type: 'symmetric',
+                    name: 'Recta L₁ (Alabeada)',
+                    color: '#10b981',
+                    visible: true,
+                    collapsed: false,
+                    customNote: 'Recta paralela al plano XY contenida en la cota constante z = -2.',
+                    x0: 1, y0: 0, z0: -2,
+                    a: 2, b: 1, c: 0,
+                    tmin: -5, tmax: 5,
+                    showP0: true,
+                    showVector: true
+                });
+                state.equations.push({
+                    id: state.nextId++,
+                    type: 'symmetric',
+                    name: 'Recta L₂ (Alabeada)',
+                    color: '#a855f7',
+                    visible: true,
+                    collapsed: false,
+                    customNote: 'Recta oblicua que se cruza con L₁ sin intersectarla en ningún punto.',
+                    x0: 0, y0: 2, z0: 3,
+                    a: -1, b: 2, c: 1,
+                    tmin: -5, tmax: 5,
+                    showP0: true,
+                    showVector: true
+                });
+            }
+
+            rebuildSidebarUI();
+            renderPlot(false);
+        }
+
+        function addEquation(type) {
+            const color = COLOR_PALETTE[(state.nextId - 1) % COLOR_PALETTE.length];
+            const id = state.nextId++;
+
+            if (type === 'symmetric') {
+                const symCount = state.equations.filter(e => e.type === 'symmetric').length + 1;
+                state.equations.push({
+                    id,
+                    type: 'symmetric',
+                    name: `Recta L_${symCount}`,
+                    color,
+                    visible: true,
+                    collapsed: false,
+                    customNote: '',
+                    x0: symCount === 1 ? 2 : -1,
+                    y0: symCount === 1 ? -3 : 1,
+                    z0: symCount === 1 ? 4 : 2,
+                    a: symCount === 1 ? 3 : 2,
+                    b: symCount === 1 ? -4 : 1,
+                    c: symCount === 1 ? 0 : -1,
+                    tmin: -4,
+                    tmax: 4,
+                    showP0: true,
+                    showVector: true
+                });
+            } else {
+                const paramCount = state.equations.filter(e => e.type === 'parametric').length + 1;
+                state.equations.push({
+                    id,
+                    type: 'parametric',
+                    name: `Curva C_${paramCount}`,
+                    color,
+                    visible: true,
+                    collapsed: false,
+                    customNote: '',
+                    x: '3 * cos(t)',
+                    y: '3 * sin(t)',
+                    z: 't / 2',
+                    tmin: -10,
+                    tmax: 10,
+                    steps: 600
+                });
+            }
+
+            rebuildSidebarUI();
+            renderPlot(true);
+        }
+
+        function applyParametricPreset(id, presetKey) {
+            const eq = state.equations.find(e => e.id === id);
+            const preset = PARAMETRIC_PRESETS[presetKey];
+            if (!eq || !preset) return;
+
+            eq.name = preset.name;
+            eq.x = preset.x;
+            eq.y = preset.y;
+            eq.z = preset.z;
+            eq.tmin = preset.tmin;
+            eq.tmax = preset.tmax;
+            eq.steps = preset.steps;
+            eq.customNote = preset.customNote;
+
+            rebuildSidebarUI();
+            renderPlot(true);
+        }
+
+        function removeEquation(id) {
+            state.equations = state.equations.filter(e => e.id !== id);
+            rebuildSidebarUI();
+            renderPlot(true);
+        }
+
+        function toggleVisibility(id) {
+            const eq = state.equations.find(e => e.id === id);
+            if (!eq) return;
+            eq.visible = !eq.visible;
+            rebuildSidebarUI();
+            renderPlot(true);
+        }
+
+        function toggleCollapse(id) {
+            const eq = state.equations.find(e => e.id === id);
+            if (!eq) return;
+            eq.collapsed = !eq.collapsed;
+            rebuildSidebarUI();
+        }
+
+        function collapseAllCards() {
+            state.allCollapsed = !state.allCollapsed;
+            state.equations.forEach(e => e.collapsed = state.allCollapsed);
+            rebuildSidebarUI();
+        }
+
+        function toggleSummaryOverlay() {
+            state.summaryVisible = !state.summaryVisible;
+            const panel = document.getElementById('floating-summary-panel');
+            const btn = document.getElementById('btn-toggle-summary');
+            if (state.summaryVisible) {
+                panel.classList.remove('hidden');
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1.5 shadow-sm';
+            } else {
+                panel.classList.add('hidden');
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition flex items-center gap-1.5';
+            }
+        }
+
+        function updateEqField(id, field, value, isNumeric = false) {
+            const eq = state.equations.find(e => e.id === id);
+            if (!eq) return;
+
+            if (typeof value === 'boolean') {
+                eq[field] = value;
+            } else if (isNumeric) {
+                eq[field] = parseFloat(value);
+            } else {
+                eq[field] = value;
+            }
+
+            if (eq.type === 'symmetric') {
+                const previewEl = document.getElementById(`sym-preview-${id}`);
+                if (previewEl) {
+                    previewEl.innerHTML = buildSymmetricAlgebraicHTML(eq);
+                }
+            }
+
+            if (field === 'name') {
+                updateLineSelectors();
+            }
+
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(() => {
+                refreshDescriptionsUI();
+                runLineAnalysis();
+                renderPlot(true);
+            }, 120);
+        }
+
+        // ==========================================
+        // MOTOR GENERADOR DE FICHAS DESCRIPTIVAS (MATEMÁTICA Y GEOMETRÍA)
+        // ==========================================
+        function formatNum(n) {
+            if (isNaN(n) || !isFinite(n)) return 0;
+            return Number(Math.round(n + 'e4') + 'e-4');
+        }
+
+        function generateSymmetricDescription(eq) {
+            const x0 = parseFloat(eq.x0) || 0;
+            const y0 = parseFloat(eq.y0) || 0;
+            const z0 = parseFloat(eq.z0) || 0;
+            const a = parseFloat(eq.a) || 0;
+            const b = parseFloat(eq.b) || 0;
+            const c = parseFloat(eq.c) || 0;
+
+            const mag = Math.sqrt(a * a + b * b + c * c);
+            if (mag < 1e-9) {
+                return {
+                    classification: 'Punto Estático (Vector director nulo)',
+                    passesOrigin: (Math.abs(x0) < 1e-7 && Math.abs(y0) < 1e-7 && Math.abs(z0) < 1e-7),
+                    distOrigin: formatNum(Math.sqrt(x0*x0 + y0*y0 + z0*z0)),
+                    mag: 0,
+                    unitVec: '⟨0, 0, 0⟩',
+                    angles: 'Indefinidos',
+                    summaryText: `El vector director es nulo ⟨0, 0, 0⟩, por lo que la gráfica se reduce al punto fijo P₀(${formatNum(x0)}, ${formatNum(y0)}, ${formatNum(z0)}).`
+                };
+            }
+
+            const ux = a / mag, uy = b / mag, uz = c / mag;
+            const alpha = (Math.acos(Math.min(1, Math.max(-1, ux))) * 180) / Math.PI;
+            const beta  = (Math.acos(Math.min(1, Math.max(-1, uy))) * 180) / Math.PI;
+            const gamma = (Math.acos(Math.min(1, Math.max(-1, uz))) * 180) / Math.PI;
+
+            // Distancia de la recta al origen (0,0,0): ||P0 x v|| / ||v||
+            const cx = y0 * c - z0 * b;
+            const cy = z0 * a - x0 * c;
+            const cz = x0 * b - y0 * a;
+            const distOrigin = Math.sqrt(cx * cx + cy * cy + cz * cz) / mag;
+            const passesOrigin = distOrigin < 1e-6;
+
+            // Orientación espacial según ceros del vector director
+            const zeroA = Math.abs(a) < 1e-7;
+            const zeroB = Math.abs(b) < 1e-7;
+            const zeroC = Math.abs(c) < 1e-7;
+            const zeroCount = (zeroA ? 1 : 0) + (zeroB ? 1 : 0) + (zeroC ? 1 : 0);
+
+            let classification = 'Recta oblicua en el espacio ℝ³';
+            let orientationDetail = 'atraviesa de forma oblicua los tres planos coordenados';
+
+            if (zeroCount === 2) {
+                if (!zeroA) {
+                    classification = (Math.abs(y0) < 1e-7 && Math.abs(z0) < 1e-7) ? 'Recta coincidente con el Eje X' : 'Recta paralela al Eje X';
+                    orientationDetail = `mantiene constantes y = ${formatNum(y0)}, z = ${formatNum(z0)}`;
+                } else if (!zeroB) {
+                    classification = (Math.abs(x0) < 1e-7 && Math.abs(z0) < 1e-7) ? 'Recta coincidente con el Eje Y' : 'Recta paralela al Eje Y';
+                    orientationDetail = `mantiene constantes x = ${formatNum(x0)}, z = ${formatNum(z0)}`;
+                } else {
+                    classification = (Math.abs(x0) < 1e-7 && Math.abs(y0) < 1e-7) ? 'Recta coincidente con el Eje Z' : 'Recta paralela al Eje Z';
+                    orientationDetail = `mantiene constantes x = ${formatNum(x0)}, y = ${formatNum(y0)}`;
+                }
+            } else if (zeroCount === 1) {
+                if (zeroA) {
+                    classification = Math.abs(x0) < 1e-7 ? 'Recta contenida en el Plano YZ' : 'Recta paralela al Plano coordenado YZ';
+                    orientationDetail = `con coordenada constante x = ${formatNum(x0)}`;
+                } else if (zeroB) {
+                    classification = Math.abs(y0) < 1e-7 ? 'Recta contenida en el Plano XZ' : 'Recta paralela al Plano coordenado XZ';
+                    orientationDetail = `con coordenada constante y = ${formatNum(y0)}`;
+                } else if (zeroC) {
+                    classification = Math.abs(z0) < 1e-7 ? 'Recta contenida en el Plano XY' : 'Recta paralela al Plano coordenado XY';
+                    orientationDetail = `con cota constante z = ${formatNum(z0)}`;
+                }
+            }
+
+            const originPhrase = passesOrigin
+                ? 'pasa por el origen (0, 0, 0)'
+                : `dista ${formatNum(distOrigin)} u del origen`;
+
+            const summaryText = `${classification} (${orientationDetail}). Pasa por P₀(${formatNum(x0)}, ${formatNum(y0)}, ${formatNum(z0)}) con vector director v⃗ = ⟨${formatNum(a)}, ${formatNum(b)}, ${formatNum(c)}⟩, magnitud ‖v⃗‖ = ${formatNum(mag)} y ${originPhrase}.`;
+
+            return {
+                classification,
+                passesOrigin,
+                distOrigin: formatNum(distOrigin),
+                mag: formatNum(mag),
+                unitVec: `⟨${formatNum(ux)}, ${formatNum(uy)}, ${formatNum(uz)}⟩`,
+                angles: `α = ${formatNum(alpha)}°, β = ${formatNum(beta)}°, γ = ${formatNum(gamma)}°`,
+                summaryText
+            };
+        }
+
+        function detectFunctionFamilies(exprStr) {
+            const s = (exprStr || '').toLowerCase();
+            const families = [];
+            if (/(sin|cos|tan|sec|csc|cot|asin|acos|atan)/.test(s)) families.push('trigonométrica/oscilatoria');
+            if (/(exp|e\^)/.test(s)) families.push('exponencial');
+            if (/(log|ln)/.test(s)) families.push('logarítmica');
+            if (/(sqrt|cbrt)/.test(s)) families.push('radical');
+            if (/\^/.test(s) || /t\s*\*\s*t/.test(s)) families.push('polinómica/potencial');
+            if (/\//.test(s) && /t/.test(s.split('/')[1] || '')) families.push('racional');
+            if (families.length === 0) {
+                if (/t/.test(s)) families.push('lineal');
+                else families.push('constante');
+            }
+            return families;
+        }
+
+        function generateParametricDescription(eq) {
+            const tMin = parseFloat(eq.tmin);
+            const tMax = parseFloat(eq.tmax);
+            const steps = Math.min(2000, Math.max(40, parseInt(eq.steps, 10) || 500));
+
+            if (isNaN(tMin) || isNaN(tMax) || tMin >= tMax) {
+                return {
+                    classification: 'Dominio inválido',
+                    isClosed: false,
+                    topologyBadge: 'Error de rango',
+                    arcLength: 0,
+                    startPt: '-',
+                    endPt: '-',
+                    bbox: '-',
+                    summaryText: 'El límite inferior t_min debe ser estrictamente menor que t_max.'
+                };
+            }
+
+            let compX, compY, compZ;
+            try {
+                compX = math.compile(eq.x || '0');
+                compY = math.compile(eq.y || '0');
+                compZ = math.compile(eq.z || '0');
+            } catch (e) {
+                return {
+                    classification: 'Error de sintaxis',
+                    isClosed: false,
+                    topologyBadge: 'Revisar fórmula',
+                    arcLength: 0,
+                    startPt: '-',
+                    endPt: '-',
+                    bbox: '-',
+                    summaryText: 'Revisa la escritura de x(t), y(t) o z(t) para calcular las propiedades geométricas.'
+                };
+            }
+
+            const pts = [];
+            const dt = (tMax - tMin) / steps;
+            for (let i = 0; i <= steps; i++) {
+                const tVal = tMin + i * dt;
+                try {
+                    const xv = compX.evaluate({ t: tVal });
+                    const yv = compY.evaluate({ t: tVal });
+                    const zv = compZ.evaluate({ t: tVal });
+                    if (isFinite(xv) && isFinite(yv) && isFinite(zv)) {
+                        pts.push([xv, yv, zv]);
+                    }
+                } catch (e) {
+                    // Ignorar puntos singulares
+                }
+            }
+
+            if (pts.length < 2) {
+                return {
+                    classification: 'Sin puntos reales en el intervalo',
+                    isClosed: false,
+                    topologyBadge: 'Vacío',
+                    arcLength: 0,
+                    startPt: '-',
+                    endPt: '-',
+                    bbox: '-',
+                    summaryText: 'La función no devuelve valores reales en el dominio [t_min, t_max] especificado.'
+                };
+            }
+
+            // Longitud de arco L y caja delimitadora
+            let arcLength = 0;
+            let minX = pts[0][0], maxX = pts[0][0];
+            let minY = pts[0][1], maxY = pts[0][1];
+            let minZ = pts[0][2], maxZ = pts[0][2];
+
+            for (let i = 0; i < pts.length; i++) {
+                const [px, py, pz] = pts[i];
+                if (px < minX) minX = px; if (px > maxX) maxX = px;
+                if (py < minY) minY = py; if (py > maxY) maxY = py;
+                if (pz < minZ) minZ = pz; if (pz > maxZ) maxZ = pz;
+
+                if (i > 0) {
+                    const dx = px - pts[i - 1][0];
+                    const dy = py - pts[i - 1][1];
+                    const dz = pz - pts[i - 1][2];
+                    arcLength += Math.sqrt(dx * dx + dy * dy + dz * dz);
+                }
+            }
+
+            const spanX = maxX - minX;
+            const spanY = maxY - minY;
+            const spanZ = maxZ - minZ;
+            const maxSpan = Math.max(spanX, spanY, spanZ) || 1;
+
+            const first = pts[0];
+            const last = pts[pts.length - 1];
+            const endDist = Math.sqrt(
+                Math.pow(last[0] - first[0], 2) +
+                Math.pow(last[1] - first[1], 2) +
+                Math.pow(last[2] - first[2], 2)
+            );
+
+            // Detección de curva cerrada: R(t_min) ≈ R(t_max)
+            const isClosed = arcLength > 1e-4 && endDist < 0.035 * maxSpan;
+            const topologyBadge = isClosed ? 'Curva Cerrada (R(t_min) ≈ R(t_max))' : 'Curva Abierta';
+
+            // Clasificación espacial
+            const zeroSpanX = spanX < 1e-6;
+            const zeroSpanY = spanY < 1e-6;
+            const zeroSpanZ = spanZ < 1e-6;
+
+            let classification = 'Curva alabeada en el espacio ℝ³';
+            if (zeroSpanX && zeroSpanY && zeroSpanZ) {
+                classification = 'Punto estático en ℝ³';
+            } else if ((zeroSpanX && zeroSpanY) || (zeroSpanX && zeroSpanZ) || (zeroSpanY && zeroSpanZ)) {
+                classification = 'Segmento rectilíneo paralelo a un eje';
+            } else if (zeroSpanZ) {
+                classification = `Curva plana en z = ${formatNum(minZ)} (paralela a XY)`;
+            } else if (zeroSpanY) {
+                classification = `Curva plana en y = ${formatNum(minY)} (paralela a XZ)`;
+            } else if (zeroSpanX) {
+                classification = `Curva plana en x = ${formatNum(minX)} (paralela a YZ)`;
+            } else if (Math.abs(arcLength - endDist) < 1e-4 * arcLength) {
+                classification = 'Trayectoria rectilínea oblicua en ℝ³';
+            }
+
+            const allFamilies = new Set([
+                ...detectFunctionFamilies(eq.x),
+                ...detectFunctionFamilies(eq.y),
+                ...detectFunctionFamilies(eq.z)
+            ]);
+            const familiesText = Array.from(allFamilies).join(', ');
+
+            const startPtStr = `(${formatNum(first[0])}, ${formatNum(first[1])}, ${formatNum(first[2])})`;
+            const endPtStr = `(${formatNum(last[0])}, ${formatNum(last[1])}, ${formatNum(last[2])})`;
+            const bboxStr = `ΔX=${formatNum(spanX)}, ΔY=${formatNum(spanY)}, ΔZ=${formatNum(spanZ)}`;
+
+            const summaryText = `${classification} y ${isClosed ? 'cerrada (periódica en el intervalo)' : 'abierta'}, con componentes de tipo ${familiesText}. En t ∈ [${formatNum(tMin)}, ${formatNum(tMax)}] recorre una longitud de arco de L ≈ ${formatNum(arcLength)} u.`;
+
+            return {
+                classification,
+                isClosed,
+                topologyBadge,
+                arcLength: formatNum(arcLength),
+                startPt: startPtStr,
+                endPt: endPtStr,
+                bbox: bboxStr,
+                summaryText
+            };
+        }
+
+        function buildAutoDescriptionCardHTML(eq) {
+            if (eq.type === 'symmetric') {
+                const info = generateSymmetricDescription(eq);
+                return `
+                    <div class="bg-[#0b0f19] border border-emerald-500/30 rounded-xl p-3 space-y-2 text-[11px] shadow-inner">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                            <span class="font-bold text-emerald-300 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Ficha Descriptiva Automática
+                            </span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-mono text-[10px]">
+                                ‖v⃗‖ = ${info.mag}
+                            </span>
+                        </div>
+                        <p class="text-slate-200 leading-relaxed">${info.summaryText}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 font-mono text-[10px]">
+                            <div class="bg-[#111827] px-2.5 py-1.5 rounded-lg border border-slate-800">
+                                <span class="block text-slate-400">Vector Unitario û</span>
+                                <span class="text-slate-100 font-semibold">${info.unitVec}</span>
+                            </div>
+                            <div class="bg-[#111827] px-2.5 py-1.5 rounded-lg border border-slate-800">
+                                <span class="block text-slate-400">Ángulos Directores</span>
+                                <span class="text-cyan-300 font-semibold">${info.angles}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const info = generateParametricDescription(eq);
+                return `
+                    <div class="bg-[#0b0f19] border border-cyan-500/30 rounded-xl p-3 space-y-2 text-[11px] shadow-inner">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                            <span class="font-bold text-cyan-300 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Ficha Descriptiva Automática
+                            </span>
+                            <span class="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 font-mono text-[10px] font-semibold">
+                                Longitud L ≈ ${info.arcLength} u
+                            </span>
+                        </div>
+                        <p class="text-slate-200 leading-relaxed">${info.summaryText}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 font-mono text-[10px]">
+                            <div class="bg-[#111827] px-2.5 py-1.5 rounded-lg border border-slate-800">
+                                <span class="block text-slate-400">Inicio R(t_min) → Fin R(t_max)</span>
+                                <span class="text-slate-100">${info.startPt} → ${info.endPt}</span>
+                            </div>
+                            <div class="bg-[#111827] px-2.5 py-1.5 rounded-lg border border-slate-800">
+                                <span class="block text-slate-400">Dimensiones (Caja 3D)</span>
+                                <span class="text-emerald-300">${info.bbox}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function refreshDescriptionsUI() {
+            state.equations.forEach(eq => {
+                const descEl = document.getElementById(`auto-desc-${eq.id}`);
+                if (descEl) {
+                    descEl.innerHTML = buildAutoDescriptionCardHTML(eq);
+                }
+            });
+            updateFloatingSummaryPanel();
+        }
+
+        function updateFloatingSummaryPanel() {
+            const container = document.getElementById('floating-summary-content');
+            if (!container) return;
+
+            const visibleEqs = state.equations.filter(e => e.visible);
+            if (visibleEqs.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-[11px] italic">No hay ecuaciones visibles en la escena.</p>`;
+                return;
+            }
+
+            container.innerHTML = visibleEqs.map(eq => {
+                const isSym = eq.type === 'symmetric';
+                const info = isSym ? generateSymmetricDescription(eq) : generateParametricDescription(eq);
+                return `
+                    <div class="p-3 rounded-xl bg-[#0b0f19] border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="w-3 h-3 rounded-full shrink-0" style="background:${eq.color}"></span>
+                                <span class="font-bold text-white truncate">${eq.name}</span>
+                            </div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shrink-0">
+                                ${isSym ? `‖v⃗‖ = ${info.mag}` : `L ≈ ${info.arcLength} u`}
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-200 leading-snug">${info.summaryText}</p>
+                        <div class="text-[10px] font-mono text-cyan-300 bg-[#111827] px-2 py-1 rounded border border-slate-800/80">
+                            ${isSym ? `Ángulos: ${info.angles}` : `${info.topologyBadge} | ${info.bbox}`}
+                        </div>
+                        ${eq.customNote ? `
+                            <div class="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-lg px-2.5 py-1.5">
+                                <strong>Nota:</strong> ${eq.customNote}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // FORMATEO DE ECUACIÓN SIMÉTRICA Y TARJETAS DEL SIDEBAR
+        // ==========================================
+        function formatNumerator(variable, coord0) {
+            const c = formatNum(coord0);
+            if (c === 0) return `${variable}`;
+            if (c > 0) return `${variable} - ${c}`;
+            return `${variable} + ${Math.abs(c)}`;
+        }
+
+        function formatParametricTerm(coord0, dir) {
+            const c0 = formatNum(coord0);
+            const d = formatNum(dir);
+            if (d === 0) return `${c0}`;
+            const sign = d > 0 ? '+' : '-';
+            const absD = Math.abs(d) === 1 ? '' : `${Math.abs(d)}·`;
+            if (c0 === 0) {
+                return d > 0 ? `${absD}t` : `-${absD}t`;
+            }
+            return `${c0} ${sign} ${absD}t`;
+        }
+
+        function buildSymmetricAlgebraicHTML(eq) {
+            const x0 = eq.x0 || 0, y0 = eq.y0 || 0, z0 = eq.z0 || 0;
+            const a = eq.a || 0, b = eq.b || 0, c = eq.c || 0;
+
+            const termsContinuous = [];
+            const constraints = [];
+
+            [
+                { v: 'x', p0: x0, d: a },
+                { v: 'y', p0: y0, d: b },
+                { v: 'z', p0: z0, d: c }
+            ].forEach(item => {
+                if (Math.abs(item.d) > 1e-9) {
+                    termsContinuous.push(`
+                        <span class="math-fraction">
+                            <span class="math-fraction-num">${formatNumerator(item.v, item.p0)}</span>
+                            <span class="math-fraction-den">${formatNum(item.d)}</span>
+                        </span>
+                    `);
+                } else {
+                    constraints.push(`<span class="text-amber-300 font-semibold">${item.v} = ${formatNum(item.p0)}</span>`);
+                }
+            });
+
+            let htmlContinuous = '';
+            if (termsContinuous.length > 0) {
+                htmlContinuous = termsContinuous.join(' <span class="text-slate-400 mx-0.5">=</span> ');
+                if (constraints.length > 0) {
+                    htmlContinuous += ` <span class="text-slate-500 mx-1.5">;</span> ` + constraints.join(' , ');
+                }
+            } else {
+                htmlContinuous = `<span class="text-rose-400">Vector director nulo (Punto fijo)</span>`;
+            }
+
+            return `
+                <div class="text-center py-1 overflow-x-auto">${htmlContinuous}</div>
+                <div class="border-t border-slate-800 pt-1.5 mt-1.5 flex flex-wrap justify-between gap-2 text-[11px] text-slate-300">
+                    <span><strong class="text-rose-400">x</strong> = ${formatParametricTerm(x0, a)}</span>
+                    <span><strong class="text-emerald-400">y</strong> = ${formatParametricTerm(y0, b)}</span>
+                    <span><strong class="text-sky-400">z</strong> = ${formatParametricTerm(z0, c)}</span>
+                </div>
+            `;
+        }
+
+        function rebuildSidebarUI() {
+            const container = document.getElementById('equations-list');
+            const badge = document.getElementById('eq-counter-badge');
+            badge.textContent = `${state.equations.length} ${state.equations.length === 1 ? 'activa' : 'activas'}`;
+
+            if (state.equations.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 rounded-2xl bg-[#0b0f19] border border-dashed border-slate-800 text-center space-y-2">
+                        <p class="text-xs text-slate-400">No hay ecuaciones en la escena.</p>
+                        <p class="text-[11px] text-slate-500">Haz clic en "+ Curva Paramétrica" o "+ Recta Simétrica" arriba.</p>
+                    </div>
+                `;
+                updateLineSelectors();
+                runLineAnalysis();
+                updateFloatingSummaryPanel();
+                return;
+            }
+
+            container.innerHTML = state.equations.map(eq => {
+                const isSym = eq.type === 'symmetric';
+                const badgeText = isSym ? 'Simétrica (Recta)' : 'Paramétrica (Curva)';
+                const badgeClass = isSym
+                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30';
+
+                return `
+                <div class="rounded-2xl bg-[#0b0f19] border ${eq.visible ? 'border-slate-800' : 'border-slate-800/40 opacity-60'} overflow-hidden transition shadow-xl">
+                    <!-- Cabecera de la tarjeta -->
+                    <div class="p-3 bg-slate-900/90 flex items-center justify-between gap-2 border-b border-slate-800">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <input type="color" value="${eq.color}" onchange="updateEqField(${eq.id}, 'color', this.value)"
+                                class="w-6 h-6 rounded-md cursor-pointer shrink-0 bg-transparent" title="Cambiar color">
+                            
+                            <input type="text" value="${eq.name}" oninput="updateEqField(${eq.id}, 'name', this.value)"
+                                class="bg-transparent font-bold text-xs text-white focus:outline-none focus:bg-slate-800 px-1.5 py-0.5 rounded w-full truncate"
+                                placeholder="Nombre de la ecuación...">
+                        </div>
+
+                        <div class="flex items-center gap-1 shrink-0">
+                            <span class="px-2 py-0.5 text-[10px] font-mono border rounded-full ${badgeClass}">
+                                ${badgeText}
+                            </span>
+
+                            <!-- Mostrar/Ocultar -->
+                            <button onclick="toggleVisibility(${eq.id})" title="${eq.visible ? 'Ocultar' : 'Mostrar'}"
+                                class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                                ${eq.visible ? `
+                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>` : `
+                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                </svg>`}
+                            </button>
+
+                            <!-- Contraer -->
+                            <button onclick="toggleCollapse(${eq.id})" title="Contraer/Expandir"
+                                class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                                <svg class="w-4 h-4 transform transition-transform ${eq.collapsed ? '-rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+
+                            <!-- Eliminar -->
+                            <button onclick="removeEquation(${eq.id})" title="Eliminar ecuación"
+                                class="p-1.5 rounded-lg hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cuerpo de la tarjeta -->
+                    <div class="${eq.collapsed ? 'hidden' : 'p-3.5 space-y-3'}">
+                        ${isSym ? `
+                            <!-- Controles de Recta Simétrica -->
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div class="bg-[#111827] p-2.5 rounded-xl border border-slate-800">
+                                    <span class="block text-[10px] font-semibold text-amber-400 mb-1.5">Punto Inicial P₀ (x₀, y₀, z₀)</span>
+                                    <div class="grid grid-cols-3 gap-1.5">
+                                        <div>
+                                            <span class="block text-[9px] font-mono text-slate-400">x₀</span>
+                                            <input type="number" step="0.5" value="${eq.x0}" oninput="updateEqField(${eq.id}, 'x0', this.value, true)"
+                                                class="w-full bg-[#0b0f19] border border-slate-700 rounded px-1.5 py-1 text-xs font-mono text-white">
+                                        </div>
+                                        <div>
+                                            <span class="block text-[9px] font-mono text-slate-400">y₀</span>
+                                            <input type="number" step="0.5" value="${eq.y0}" oninput="updateEqField(${eq.id}, 'y0', this.value, true)"
+                                                class="w-full bg-[#0b0f19] border border-slate-700 rounded px-1.5 py-1 text-xs font-mono text-white">
+                                        </div>
+                                        <div>
+                                            <span class="block text-[9px] font-mono text-slate-400">z₀</span>
+                                            <input type="number" step="0.5" value="${eq.z0}" oninput="updateEqField(${eq.id}, 'z0', this.value, true)"
+                                                class="w-full bg-[#0b0f19] border border-slate-700 rounded px-1.5 py-1 text-xs font-mono text-white">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-[#111827] p-2.5 rounded-xl border border-slate-800">
+                                    <span class="block text-[10px] font-semibold text-cyan-400 mb-1.5">Vector Director v⃗ = ⟨a, b, c⟩</span>
+                                    <div class="grid grid-cols-3 gap-1.5">
+                                        <div>
+                                            <span class="block text-[9px] font-mono text-slate-400">a</span>
+                                            <input type="number" step="0.5" value="${eq.a}" oninput="updateEqField(${eq.id}, 'a', this.value, true)"
+                                                class="w-full bg-[#0b0f19] border border-slate-700 rounded px-1.5 py-1 text-xs font-mono text-white">
+                                        </div>
+                                        <div>
+                                            <span class="block text-[9px] font-mono text-slate-400">b</span>
+                                            <input type="number" step="0.5" value="${eq.b}" oninput="updateEqField(${eq.id}, 'b', this.value, true)"
+                                                class="w-full bg-[#0b0f19] border border-slate-700 rounded px-1.5 py-1 text-xs font-mono text-white">
+                                        </div>
+                                        <div>
+                                            <span class="block text-[9px] font-mono text-slate-400">c</span>
+                                            <input type="number" step="0.5" value="${eq.c}" oninput="updateEqField(${eq.id}, 'c', this.value, true)"
+                                                class="w-full bg-[#0b0f19] border border-slate-700 rounded px-1.5 py-1 text-xs font-mono text-white">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Vista previa algebraica -->
+                            <div id="sym-preview-${eq.id}" class="font-mono text-xs bg-[#111827] px-3 py-2 rounded-xl border border-slate-800 text-slate-200">
+                                ${buildSymmetricAlgebraicHTML(eq)}
+                            </div>
+
+                            <!-- Opciones y rango t -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                                <div class="flex items-center gap-3">
+                                    <label class="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
+                                        <input type="checkbox" ${eq.showP0 ? 'checked' : ''} onchange="updateEqField(${eq.id}, 'showP0', this.checked)" class="rounded accent-amber-500">
+                                        <span>Punto P₀</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
+                                        <input type="checkbox" ${eq.showVector ? 'checked' : ''} onchange="updateEqField(${eq.id}, 'showVector', this.checked)" class="rounded accent-cyan-500">
+                                        <span>Vector v⃗</span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center gap-1.5 font-mono text-[11px]">
+                                    <span class="text-slate-400">t ∈ [</span>
+                                    <input type="number" value="${eq.tmin}" step="1" oninput="updateEqField(${eq.id}, 'tmin', this.value, true)"
+                                        class="w-12 bg-[#111827] border border-slate-700 rounded px-1 py-0.5 text-center text-white">
+                                    <span class="text-slate-400">,</span>
+                                    <input type="number" value="${eq.tmax}" step="1" oninput="updateEqField(${eq.id}, 'tmax', this.value, true)"
+                                        class="w-12 bg-[#111827] border border-slate-700 rounded px-1 py-0.5 text-center text-white">
+                                    <span class="text-slate-400">]</span>
+                                </div>
+                            </div>
+                        ` : `
+                            <!-- Plantillas rápidas de curvas paramétricas -->
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[10px] text-slate-400">Ejemplos:</span>
+                                <button onclick="applyParametricPreset(${eq.id}, 'lissajous')" class="px-2 py-0.5 rounded bg-[#111827] hover:bg-slate-800 text-[10px] text-cyan-300 border border-slate-800 transition">Silla Lissajous</button>
+                                <button onclick="applyParametricPreset(${eq.id}, 'helice')" class="px-2 py-0.5 rounded bg-[#111827] hover:bg-slate-800 text-[10px] text-cyan-300 border border-slate-800 transition">Hélice</button>
+                                <button onclick="applyParametricPreset(${eq.id}, 'trebol')" class="px-2 py-0.5 rounded bg-[#111827] hover:bg-slate-800 text-[10px] text-cyan-300 border border-slate-800 transition">Nudo Trébol</button>
+                                <button onclick="applyParametricPreset(${eq.id}, 'cono')" class="px-2 py-0.5 rounded bg-[#111827] hover:bg-slate-800 text-[10px] text-cyan-300 border border-slate-800 transition">Cono Espiral</button>
+                            </div>
+
+                            <!-- Entradas x(t), y(t), z(t) -->
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <span class="w-12 text-center font-mono text-xs font-semibold text-rose-400 bg-[#111827] border border-r-0 border-slate-700 rounded-l-lg py-1.5">x(t)=</span>
+                                    <input type="text" value="${eq.x}" oninput="updateEqField(${eq.id}, 'x', this.value)"
+                                        class="w-full bg-[#111827] border border-slate-700 rounded-r-lg px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-cyan-500">
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-12 text-center font-mono text-xs font-semibold text-emerald-400 bg-[#111827] border border-r-0 border-slate-700 rounded-l-lg py-1.5">y(t)=</span>
+                                    <input type="text" value="${eq.y}" oninput="updateEqField(${eq.id}, 'y', this.value)"
+                                        class="w-full bg-[#111827] border border-slate-700 rounded-r-lg px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-cyan-500">
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-12 text-center font-mono text-xs font-semibold text-sky-400 bg-[#111827] border border-r-0 border-slate-700 rounded-l-lg py-1.5">z(t)=</span>
+                                    <input type="text" value="${eq.z}" oninput="updateEqField(${eq.id}, 'z', this.value)"
+                                        class="w-full bg-[#111827] border border-slate-700 rounded-r-lg px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-cyan-500">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+                                <div>
+                                    <span class="text-slate-400 block mb-0.5">t mínimo</span>
+                                    <input type="number" step="0.5" value="${eq.tmin}" oninput="updateEqField(${eq.id}, 'tmin', this.value, true)"
+                                        class="w-full bg-[#111827] border border-slate-700 rounded px-2 py-1 text-white">
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 block mb-0.5">t máximo</span>
+                                    <input type="number" step="0.5" value="${eq.tmax}" oninput="updateEqField(${eq.id}, 'tmax', this.value, true)"
+                                        class="w-full bg-[#111827] border border-slate-700 rounded px-2 py-1 text-white">
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 block mb-0.5">Resolución</span>
+                                    <input type="number" step="50" min="50" max="2000" value="${eq.steps}" oninput="updateEqField(${eq.id}, 'steps', this.value, true)"
+                                        class="w-full bg-[#111827] border border-slate-700 rounded px-2 py-1 text-white">
+                                </div>
+                            </div>
+                        `}
+
+                        <!-- Campo de Nota / Descripción del Ejercicio -->
+                        <div class="pt-1">
+                            <label class="block text-[10px] font-semibold text-slate-400 mb-1">
+                                Nota / Descripción del ejercicio (opcional):
+                            </label>
+                            <input type="text" value="${eq.customNote || ''}" oninput="updateEqField(${eq.id}, 'customNote', this.value)"
+                                placeholder="Escribe aquí una observación para tu ingeniero..."
+                                class="w-full bg-[#111827] border border-slate-800 focus:border-indigo-500 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none">
+                        </div>
+
+                        <!-- FICHA DESCRIPTIVA AUTOMÁTICA DENTRO DE CADA TARJETA -->
+                        <div id="auto-desc-${eq.id}">
+                            ${buildAutoDescriptionCardHTML(eq)}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            updateLineSelectors();
+            runLineAnalysis();
+            updateFloatingSummaryPanel();
+        }
+
+        // ==========================================
+        // POSICIÓN RELATIVA E INTERSECCIÓN DE DOS RECTAS EN R3
+        // ==========================================
+        function updateLineSelectors() {
+            const symLines = state.equations.filter(e => e.type === 'symmetric');
+            const selA = document.getElementById('select-line-a');
+            const selB = document.getElementById('select-line-b');
+            const container = document.getElementById('line-selectors-container');
+
+            if (symLines.length < 2) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+
+            const prevA = parseInt(selA.value, 10);
+            const prevB = parseInt(selB.value, 10);
+
+            selA.innerHTML = symLines.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+            selB.innerHTML = symLines.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+            if (symLines.some(l => l.id === prevA)) {
+                selA.value = prevA;
+            } else {
+                selA.value = symLines[0].id;
+            }
+
+            if (symLines.some(l => l.id === prevB) && prevB !== parseInt(selA.value, 10)) {
+                selB.value = prevB;
+            } else {
+                selB.value = symLines[1].id;
+            }
+        }
+
+        function computeTwoLinesRelation(L1, L2) {
+            const P1 = [L1.x0 || 0, L1.y0 || 0, L1.z0 || 0];
+            const v1 = [L1.a || 0, L1.b || 0, L1.c || 0];
+
+            const P2 = [L2.x0 || 0, L2.y0 || 0, L2.z0 || 0];
+            const v2 = [L2.a || 0, L2.b || 0, L2.c || 0];
+
+            const dot = (u, v) => u[0]*v[0] + u[1]*v[1] + u[2]*v[2];
+            const cross = (u, v) => [
+                u[1]*v[2] - u[2]*v[1],
+                u[2]*v[0] - u[0]*v[2],
+                u[0]*v[1] - u[1]*v[0]
+            ];
+            const norm = u => Math.sqrt(dot(u, u));
+            const sub = (u, v) => [u[0]-v[0], u[1]-v[1], u[2]-v[2]];
+            const add = (u, v) => [u[0]+v[0], u[1]+v[1], u[2]+v[2]];
+            const scale = (u, k) => [u[0]*k, u[1]*k, u[2]*k];
+
+            const mag1 = norm(v1);
+            const mag2 = norm(v2);
+
+            if (mag1 < 1e-9 || mag2 < 1e-9) {
+                return { status: 'degenerate', message: 'Uno de los vectores directores es nulo ⟨0,0,0⟩.' };
+            }
+
+            const w0 = sub(P1, P2);
+            const v1xv2 = cross(v1, v2);
+            const crossMag = norm(v1xv2);
+
+            const cosTheta = Math.min(1, Math.max(-1, Math.abs(dot(v1, v2)) / (mag1 * mag2)));
+            const angleDeg = (Math.acos(cosTheta) * 180) / Math.PI;
+
+            if (crossMag < 1e-7) {
+                const w0xv1 = cross(w0, v1);
+                const distParallel = norm(w0xv1) / mag1;
+                if (distParallel < 1e-6) {
+                    return {
+                        status: 'coincident',
+                        title: 'RECTAS COINCIDENTES',
+                        badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+                        distance: 0,
+                        angleDeg: 0
+                    };
+                } else {
+                    return {
+                        status: 'parallel',
+                        title: 'RECTAS PARALELAS',
+                        badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+                        distance: distParallel,
+                        angleDeg: 0
+                    };
+                }
+            }
+
+            const a = dot(v1, v1);
+            const b = dot(v1, v2);
+            const c = dot(v2, v2);
+            const d = dot(v1, w0);
+            const e = dot(v2, w0);
+
+            const denom = a * c - b * b;
+            const tClosest = (b * e - c * d) / denom;
+            const sClosest = (a * e - b * d) / denom;
+
+            const Q1 = add(P1, scale(v1, tClosest));
+            const Q2 = add(P2, scale(v2, sClosest));
+            const minDist = norm(sub(Q1, Q2));
+
+            if (minDist < 1e-5) {
+                return {
+                    status: 'intersect',
+                    title: 'RECTAS SECANTES (SE INTERSECTAN)',
+                    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+                    point: Q1,
+                    t: tClosest,
+                    s: sClosest,
+                    distance: 0,
+                    angleDeg
+                };
+            } else {
+                return {
+                    status: 'skew',
+                    title: 'RECTAS ALABEADAS (SE CRUZAN)',
+                    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+                    Q1,
+                    Q2,
+                    t: tClosest,
+                    s: sClosest,
+                    distance: minDist,
+                    angleDeg
+                };
+            }
+        }
+
+        function runLineAnalysis() {
+            const symLines = state.equations.filter(e => e.type === 'symmetric');
+            const card = document.getElementById('analysis-result-card');
+
+            if (symLines.length < 2) {
+                card.innerHTML = `
+                    <div class="text-slate-400 text-[11px]">
+                        Agrega una segunda <strong>Recta Simétrica</strong> (o haz clic en el escenario <em>"Se Intersectan"</em> arriba) para calcular puntos de corte o distancia mínima entre rectas.
+                    </div>
+                `;
+                return null;
+            }
+
+            const idA = parseInt(document.getElementById('select-line-a').value, 10);
+            const idB = parseInt(document.getElementById('select-line-b').value, 10);
+
+            const L1 = symLines.find(l => l.id === idA) || symLines[0];
+            const L2 = symLines.find(l => l.id === idB) || symLines[1];
+
+            if (L1.id === L2.id) {
+                card.innerHTML = `<p class="text-amber-300 text-[11px]">Selecciona dos rectas distintas para compararlas.</p>`;
+                return null;
+            }
+
+            const res = computeTwoLinesRelation(L1, L2);
+            res.L1 = L1;
+            res.L2 = L2;
+
+            if (res.status === 'degenerate') {
+                card.innerHTML = `<p class="text-rose-400 text-[11px]">${res.message}</p>`;
+                return null;
+            }
+
+            if (res.status === 'intersect') {
+                const [px, py, pz] = res.point.map(formatNum);
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${res.badgeColor}">
+                            ✓ ${res.title}
+                        </span>
+                        <span class="font-mono text-[11px] text-slate-400">Ángulo θ: <strong class="text-white">${formatNum(res.angleDeg)}°</strong></span>
+                    </div>
+                    <div class="bg-[#0b0f19] p-2.5 rounded-lg border border-emerald-500/30 font-mono text-xs flex items-center justify-between">
+                        <span class="text-slate-400">Punto P_int:</span>
+                        <span class="text-emerald-400 font-bold">(${px}, ${py}, ${pz})</span>
+                    </div>
+                    <div class="flex justify-between text-[11px] font-mono text-slate-400">
+                        <span>En ${L1.name}: <strong class="text-slate-200">t = ${formatNum(res.t)}</strong></span>
+                        <span>En ${L2.name}: <strong class="text-slate-200">s = ${formatNum(res.s)}</strong></span>
+                    </div>
+                `;
+            } else if (res.status === 'skew') {
+                const [q1x, q1y, q1z] = res.Q1.map(formatNum);
+                const [q2x, q2y, q2z] = res.Q2.map(formatNum);
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${res.badgeColor}">
+                            ⇄ ${res.title}
+                        </span>
+                        <span class="font-mono text-[11px] text-slate-400">Ángulo θ: <strong class="text-white">${formatNum(res.angleDeg)}°</strong></span>
+                    </div>
+                    <div class="bg-[#0b0f19] p-2.5 rounded-lg border border-amber-500/30 font-mono text-xs space-y-1">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Distancia Mínima (d_min):</span>
+                            <span class="text-amber-400 font-bold">${formatNum(res.distance)} u</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 flex justify-between pt-1 border-t border-slate-800">
+                            <span>Q₁: (${q1x}, ${q1y}, ${q1z})</span>
+                            <span>Q₂: (${q2x}, ${q2y}, ${q2z})</span>
+                        </div>
+                    </div>
+                `;
+            } else if (res.status === 'parallel') {
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${res.badgeColor}">
+                            ∥ ${res.title}
+                        </span>
+                        <span class="font-mono text-[11px] text-indigo-300 font-bold">d = ${formatNum(res.distance)} u</span>
+                    </div>
+                `;
+            } else if (res.status === 'coincident') {
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${res.badgeColor}">
+                            ≡ ${res.title}
+                        </span>
+                        <span class="font-mono text-[11px] text-slate-400">Distancia = 0</span>
+                    </div>
+                `;
+            }
+
+            return res;
+        }
+
+        // ==========================================
+        // CONSTRUCCIÓN DE TRAZAS 3D Y CONTROL DE CÁMARA
+        // ==========================================
+        function showError(msg) {
+            const box = document.getElementById('error-box');
+            const text = document.getElementById('error-message');
+            text.textContent = msg;
+            box.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error-box').classList.add('hidden');
+        }
+
+        function buildTraces() {
+            hideError();
+            const traces = [];
+
+            for (const eq of state.equations) {
+                if (!eq.visible) continue;
+
+                const tMin = parseFloat(eq.tmin);
+                const tMax = parseFloat(eq.tmax);
+
+                if (isNaN(tMin) || isNaN(tMax) || tMin >= tMax) {
+                    showError(`En "${eq.name}": t_min debe ser menor que t_max.`);
+                    continue;
+                }
+
+                const X = [], Y = [], Z = [], T = [];
+
+                if (eq.type === 'parametric') {
+                    const steps = Math.min(2500, Math.max(20, parseInt(eq.steps, 10) || 600));
+                    let compX, compY, compZ;
+                    try {
+                        compX = math.compile(eq.x || '0');
+                        compY = math.compile(eq.y || '0');
+                        compZ = math.compile(eq.z || '0');
+                        compX.evaluate({ t: 1 });
+                        compY.evaluate({ t: 1 });
+                        compZ.evaluate({ t: 1 });
+                    } catch (err) {
+                        showError(`Error en "${eq.name}": ${err.message}`);
+                        continue;
+                    }
+
+                    const dt = (tMax - tMin) / steps;
+                    for (let i = 0; i <= steps; i++) {
+                        const tVal = tMin + i * dt;
+                        try {
+                            const xv = compX.evaluate({ t: tVal });
+                            const yv = compY.evaluate({ t: tVal });
+                            const zv = compZ.evaluate({ t: tVal });
+
+                            if (typeof xv === 'number' && typeof yv === 'number' && typeof zv === 'number' &&
+                                isFinite(xv) && isFinite(yv) && isFinite(zv)) {
+                                X.push(xv); Y.push(yv); Z.push(zv); T.push(tVal);
+                            } else {
+                                X.push(null); Y.push(null); Z.push(null); T.push(tVal);
+                            }
+                        } catch (evalErr) {
+                            showError(`Error evaluando "${eq.name}": ${evalErr.message}`);
+                            break;
+                        }
+                    }
+
+                    const paramInfo = generateParametricDescription(eq);
+                    const noteLine = eq.customNote ? `<br><i>"${eq.customNote}"</i>` : '';
+
+                    traces.push({
+                        type: 'scatter3d',
+                        mode: 'lines',
+                        name: eq.name,
+                        x: X, y: Y, z: Z,
+                        text: T.map(t => `t = ${t.toFixed(2)}`),
+                        hovertemplate: `<b>${eq.name}</b> (${paramInfo.classification})${noteLine}<br>x: %{x:.3f} | y: %{y:.3f} | z: %{z:.3f}<br>%{text} | L ≈ ${paramInfo.arcLength}<extra></extra>`,
+                        line: { width: 6, color: eq.color }
+                    });
+
+                    // Puntos de inicio y fin de la curva paramétrica
+                    if (X.length > 1) {
+                        traces.push({
+                            type: 'scatter3d',
+                            mode: 'markers',
+                            name: `Inicio/Fin (${eq.name})`,
+                            showlegend: false,
+                            x: [X[0], X[X.length - 1]],
+                            y: [Y[0], Y[Y.length - 1]],
+                            z: [Z[0], Z[Z.length - 1]],
+                            marker: {
+                                size: [5, 6],
+                                color: ['#22d3ee', '#fb7185'],
+                                symbol: ['circle', 'diamond']
+                            },
+                            hovertemplate: `<b>Extremo de ${eq.name}</b><br>(%{x:.3f}, %{y:.3f}, %{z:.3f})<extra></extra>`
+                        });
+                    }
+
+                } else {
+                    // Recta Simétrica
+                    const x0 = parseFloat(eq.x0) || 0;
+                    const y0 = parseFloat(eq.y0) || 0;
+                    const z0 = parseFloat(eq.z0) || 0;
+                    const a = parseFloat(eq.a) || 0;
+                    const b = parseFloat(eq.b) || 0;
+                    const c = parseFloat(eq.c) || 0;
+
+                    const steps = 80;
+                    const dt = (tMax - tMin) / steps;
+                    for (let i = 0; i <= steps; i++) {
+                        const tVal = tMin + i * dt;
+                        X.push(x0 + a * tVal);
+                        Y.push(y0 + b * tVal);
+                        Z.push(z0 + c * tVal);
+                        T.push(tVal);
+                    }
+
+                    const symInfo = generateSymmetricDescription(eq);
+                    const noteLine = eq.customNote ? `<br><i>"${eq.customNote}"</i>` : '';
+
+                    traces.push({
+                        type: 'scatter3d',
+                        mode: 'lines',
+                        name: eq.name,
+                        x: X, y: Y, z: Z,
+                        text: T.map(t => `t = ${t.toFixed(2)}`),
+                        hovertemplate: `<b>${eq.name}</b> (${symInfo.classification})${noteLine}<br>x: %{x:.3f} | y: %{y:.3f} | z: %{z:.3f}<br>%{text} | ‖v⃗‖ = ${symInfo.mag}<extra></extra>`,
+                        line: { width: 6, color: eq.color }
+                    });
+
+                    if (eq.showP0) {
+                        traces.push({
+                            type: 'scatter3d',
+                            mode: 'markers+text',
+                            name: `P₀ (${eq.name})`,
+                            showlegend: false,
+                            x: [x0], y: [y0], z: [z0],
+                            text: [`P₀(${formatNum(x0)},${formatNum(y0)},${formatNum(z0)})`],
+                            textposition: 'top center',
+                            textfont: { color: eq.color, size: 11, family: 'JetBrains Mono' },
+                            marker: { size: 5.5, color: eq.color, line: { color: '#ffffff', width: 1.5 } },
+                            hovertemplate: `<b>P₀ de ${eq.name}</b><br>(%{x}, %{y}, %{z})<extra></extra>`
+                        });
+                    }
+
+                    if (eq.showVector && Math.sqrt(a*a + b*b + c*c) > 1e-9) {
+                        const tipX = x0 + a, tipY = y0 + b, tipZ = z0 + c;
+                        traces.push({
+                            type: 'scatter3d',
+                            mode: 'lines',
+                            name: `v⃗ (${eq.name})`,
+                            showlegend: false,
+                            x: [x0, tipX], y: [y0, tipY], z: [z0, tipZ],
+                            line: { width: 9, color: '#ffffff' },
+                            hovertemplate: `<b>Vector Director v⃗ de ${eq.name}</b><br>⟨${formatNum(a)}, ${formatNum(b)}, ${formatNum(c)}⟩<extra></extra>`
+                        });
+
+                        traces.push({
+                            type: 'cone',
+                            name: `Punta v⃗ (${eq.name})`,
+                            showlegend: false,
+                            x: [tipX], y: [tipY], z: [tipZ],
+                            u: [a], v: [b], w: [c],
+                            sizemode: 'scaled',
+                            sizeref: 0.35,
+                            anchor: 'tip',
+                            showscale: false,
+                            colorscale: [[0, eq.color], [1, '#ffffff']],
+                            hoverinfo: 'skip'
+                        });
+                    }
+                }
+            }
+
+            // Marcadores de Intersección o Distancia Mínima
+            const showAnalysis = document.getElementById('show-analysis-markers')?.checked;
+            const analysis = runLineAnalysis();
+
+            if (showAnalysis && analysis) {
+                if (analysis.status === 'intersect') {
+                    const [px, py, pz] = analysis.point;
+                    traces.push({
+                        type: 'scatter3d',
+                        mode: 'markers+text',
+                        name: 'Punto de Intersección',
+                        x: [px], y: [py], z: [pz],
+                        text: [`★ P_int(${formatNum(px)}, ${formatNum(py)}, ${formatNum(pz)})`],
+                        textposition: 'bottom center',
+                        textfont: { color: '#34d399', size: 12, family: 'JetBrains Mono' },
+                        marker: {
+                            size: 9,
+                            color: '#10b981',
+                            symbol: 'diamond',
+                            line: { color: '#ffffff', width: 2 }
+                        },
+                        hovertemplate: `<b>★ Punto de Intersección Exacto</b><br>x: %{x:.4f}<br>y: %{y:.4f}<br>z: %{z:.4f}<extra></extra>`
+                    });
+                } else if (analysis.status === 'skew') {
+                    const [q1x, q1y, q1z] = analysis.Q1;
+                    const [q2x, q2y, q2z] = analysis.Q2;
+                    traces.push({
+                        type: 'scatter3d',
+                        mode: 'lines+markers+text',
+                        name: `Dist. Mínima (${formatNum(analysis.distance)})`,
+                        x: [q1x, q2x],
+                        y: [q1y, q2y],
+                        z: [q1z, q2z],
+                        text: ['Q₁', 'Q₂'],
+                        textposition: 'top center',
+                        textfont: { color: '#fbbf24', size: 11, family: 'JetBrains Mono' },
+                        line: { width: 5, color: '#f59e0b', dash: 'dash' },
+                        marker: { size: 6, color: '#fbbf24', symbol: 'circle' },
+                        hovertemplate: `<b>Perpendicular Común (Alabeadas)</b><br>d_min = ${formatNum(analysis.distance)} u<br>(%{x:.3f}, %{y:.3f}, %{z:.3f})<extra></extra>`
+                    });
+                }
+            }
+
+            return traces;
+        }
+
+        function getLayout() {
+            return {
+                paper_bgcolor: '#0b0f19',
+                plot_bgcolor: '#0b0f19',
+                margin: { l: 0, r: 0, t: 0, b: 0 },
+                showlegend: true,
+                legend: {
+                    x: 0.02,
+                    y: 0.96,
+                    bgcolor: 'rgba(17, 24, 39, 0.88)',
+                    bordercolor: '#1e293b',
+                    borderwidth: 1,
+                    font: { color: '#e2e8f0', family: 'Inter', size: 11 }
+                },
+                scene: {
+                    camera: state.camera,
+                    aspectmode: 'cube',
+                    xaxis: {
+                        title: { text: 'Eje X', font: { color: '#fb7185', family: 'JetBrains Mono', size: 12 } },
+                        gridcolor: '#1e293b',
+                        zerolinecolor: '#f43f5e',
+                        zerolinewidth: 3,
+                        backgroundcolor: 'rgba(17, 24, 39, 0.45)',
+                        showbackground: true,
+                        tickfont: { color: '#94a3b8', family: 'JetBrains Mono', size: 10 }
+                    },
+                    yaxis: {
+                        title: { text: 'Eje Y', font: { color: '#34d399', family: 'JetBrains Mono', size: 12 } },
+                        gridcolor: '#1e293b',
+                        zerolinecolor: '#10b981',
+                        zerolinewidth: 3,
+                        backgroundcolor: 'rgba(17, 24, 39, 0.45)',
+                        showbackground: true,
+                        tickfont: { color: '#94a3b8', family: 'JetBrains Mono', size: 10 }
+                    },
+                    zaxis: {
+                        title: { text: 'Eje Z', font: { color: '#38bdf8', family: 'JetBrains Mono', size: 12 } },
+                        gridcolor: '#1e293b',
+                        zerolinecolor: '#0ea5e9',
+                        zerolinewidth: 3,
+                        backgroundcolor: 'rgba(17, 24, 39, 0.45)',
+                        showbackground: true,
+                        tickfont: { color: '#94a3b8', family: 'JetBrains Mono', size: 10 }
+                    }
+                }
+            };
+        }
+
+        function renderPlot(preserveUserCamera = true) {
+            const container = document.getElementById('plot-container');
+
+            if (preserveUserCamera && container && container._fullLayout && container._fullLayout.scene) {
+                const currentCam = container._fullLayout.scene._scene.getCamera();
+                if (currentCam) {
+                    state.camera.eye = currentCam.eye;
+                    state.camera.up = currentCam.up;
+                    state.camera.center = currentCam.center;
+                }
+            }
+
+            const traces = buildTraces();
+            const config = {
+                responsive: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['resetCameraLastSave3d']
+            };
+
+            Plotly.react('plot-container', traces, getLayout(), config);
+        }
+
+        function setCameraView(viewName) {
+            state.currentView = viewName;
+
+            const presetsCam = {
+                isometric: {
+                    eye: { x: 1.6, y: 1.6, z: 1.3 },
+                    up: { x: 0, y: 0, z: 1 },
+                    label: 'Isométrica (3D)'
+                },
+                xy: {
+                    eye: { x: 0, y: 0, z: 2.5 },
+                    up: { x: 0, y: 1, z: 0 },
+                    label: 'Plano XY (Superior)'
+                },
+                xz: {
+                    eye: { x: 0, y: -2.5, z: 0 },
+                    up: { x: 0, y: 0, z: 1 },
+                    label: 'Plano XZ (Frontal)'
+                },
+                yz: {
+                    eye: { x: 2.5, y: 0, z: 0 },
+                    up: { x: 0, y: 0, z: 1 },
+                    label: 'Plano YZ (Lateral)'
+                }
+            };
+
+            const target = presetsCam[viewName];
+            if (!target) return;
+
+            state.camera.eye = { ...target.eye };
+            state.camera.up = { ...target.up };
+            state.camera.center = { x: 0, y: 0, z: 0 };
+
+            document.querySelectorAll('.cam-btn').forEach(btn => {
+                btn.className = 'cam-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5';
+            });
+            const activeBtn = document.getElementById(`cam-${viewName}`);
+            if (activeBtn) {
+                activeBtn.className = 'cam-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm transition flex items-center gap-1.5';
+            }
+
+            document.getElementById('active-view-badge').textContent = target.label;
+
+            Plotly.relayout('plot-container', {
+                'scene.camera.eye': state.camera.eye,
+                'scene.camera.up': state.camera.up,
+                'scene.camera.center': state.camera.center
+            });
+        }
+
+        function setProjection(projType) {
+            state.projection = projType;
+            state.camera.projection = { type: projType };
+
+            const btnPersp = document.getElementById('proj-perspective');
+            const btnOrtho = document.getElementById('proj-orthographic');
+
+            if (projType === 'perspective') {
+                btnPersp.className = 'px-2.5 py-1 rounded text-xs font-medium bg-slate-800 text-white transition';
+                btnOrtho.className = 'px-2.5 py-1 rounded text-xs font-medium text-slate-400 hover:text-white transition';
+            } else {
+                btnOrtho.className = 'px-2.5 py-1 rounded text-xs font-medium bg-slate-800 text-white transition';
+                btnPersp.className = 'px-2.5 py-1 rounded text-xs font-medium text-slate-400 hover:text-white transition';
+            }
+
+            Plotly.relayout('plot-container', {
+                'scene.camera.projection.type': projType
+            });
+        }
+
+        // Inicialización con la curva Lissajous 3D que probaste + una recta simétrica
+        window.addEventListener('DOMContentLoaded', () => {
+            loadScenario('lissajous_line');
+
+            window.addEventListener('resize', () => {
+                Plotly.Plots.resize('plot-container');
+            });
+        });
+    </script>
+</body>
+</html>
